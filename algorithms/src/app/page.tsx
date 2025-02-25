@@ -1,50 +1,14 @@
 'use client'
 import { useEffect, useRef, useState } from "react";
 import { useCallback } from "react";
-import {
-  ReactFlow,
-  MiniMap,
-  Controls,
-  Background,
-  useNodesState,
-  useEdgesState,
-  addEdge,
-} from 'reactflow';
-
 import 'reactflow/dist/style.css';
 import { bubblesort, insertionSort, linearSearch, selectionSort, SelectionSortState, binarySearch } from "./search";
 import autoAnimate from "@formkit/auto-animate";
-import { SearchParams } from "next/dist/server/request/search-params";
+import type { Network } from 'vis-network';
+import vis from "vis-network/declarations/index-legacy-bundle";
+// Remove the react-graph-vis import as it can't be found
+// We'll need to implement our own graph visualization or use a different library
 
-const initialNodes = [
-  { id: '1', position: { x: 0, y: 0 }, data: { label: '1' } },
-  { id: '2', position: { x: 0, y: 100 }, data: { label: '2' } },
-];
-
-const initialEdges = [{ id: 'e1-2', source: '1', target: '2' }];
-
-function Flow() {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-
-  const onConnect = useCallback((params) => setEdges((eds) => addEdge(params, eds)), [setEdges]);
-
-  return (
-    <div style={{ width: '100%', height: '500px' }}>
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-      >
-        <MiniMap />
-        <Controls />
-        <Background />
-      </ReactFlow>
-    </div>
-  );
-}
 
 type searchType = 'linear' | 'binary' | null;
 type sortType = 'selection' | 'bubble' | 'quick' | 'merge' | 'insertion' | null;
@@ -71,6 +35,39 @@ export default function Home() {
   const [searchTarget, setSearchTarget] = useState<number>(0);
   
   const animationParent = useRef(null)
+
+
+  const graph = {
+    nodes: [
+      { id: 1, label: "Node 1", title: "node 1 tootip text" },
+      { id: 2, label: "Node 2", title: "node 2 tootip text" },
+      { id: 3, label: "Node 3", title: "node 3 tootip text" },
+      { id: 4, label: "Node 4", title: "node 4 tootip text" },
+      { id: 5, label: "Node 5", title: "node 5 tootip text" }
+    ],
+    edges: [
+      { from: 1, to: 2 },
+      { from: 1, to: 3 },
+      { from: 2, to: 4 },
+      { from: 2, to: 5 }
+    ]
+  };
+
+  const options = {
+    layout: {
+      hierarchical: true
+    },
+    edges: {
+      color: "#000000"
+    },
+    height: "500px"
+  };
+
+  const events = {
+    select: function (event) {
+      var { nodes, edges } = event;
+    }
+  };
 
 
   useEffect(() => { 
@@ -271,7 +268,14 @@ export default function Home() {
       </div>
       <div className="border rounded p-4">
         <h2 className="text-xl font-bold mb-4">Algorithm Flow</h2>
-        <Flow />
+        <Graph
+          graph={graph}
+          options={options}
+          events={events}
+          getNetwork={network => {
+            //  if you want access to vis.js network api you can set the state in a parent component using this property
+          }}
+        />
       </div>
     </div>
   );
