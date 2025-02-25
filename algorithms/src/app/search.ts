@@ -43,12 +43,13 @@ class Graph {
   }
 }
 
-class Node<T> {
+// Rename Node to TreeNode to avoid conflict with DOM's Node type
+class TreeNode<T> {
   value: T;
-  left: Node<T> | null;
-  right: Node<T> | null;
+  left: TreeNode<T> | null;
+  right: TreeNode<T> | null;
 
-constructor(value: T) {
+  constructor(value: T) {
       this.value = value;
       this.left = null;
       this.right = null;
@@ -56,10 +57,10 @@ constructor(value: T) {
 }
 
 class BinaryTree<T> {
-  root: Node<T> | null = null;
+  root: TreeNode<T> | null = null;
 
   insert(value: T) {
-    const newNode = new Node(value);
+    const newNode = new TreeNode(value);
     if (!this.root) {
       this.root = newNode;
       return; 
@@ -83,32 +84,43 @@ class BinaryTree<T> {
           return;
         }
       } else {
-        // Value already exists
         return;
       }
     }
   }
 }
 
-
-function linearSearch(num: number, arr: number[]): number[] {
-  let indices: number[] = [];
+type linearSearchState = {
+  currentArr: number[];
+  currentPointer: number | null;
+}
+export function linearSearch(num: number, arr: number[], callback?: (state: linearSearchState) => void): number {
+  let indice: number = 0;
   arr.forEach((element, idx) => {
+    callback?.(structuredClone({currentArr: arr, currentPointer: idx, currentPosition: null}))
     if (element === num) {
-      indices.push(idx);
+      indice = element;
+      return;
     }
   });
-  return indices;
+  return indice;
 }
 
 console.log(linearSearch(3, [5,4,3,2,1,0,3,5,3,3]));
 
-function binarySearch(num: number, arr: number[]): number {
+export type binarySearchState = {
+  currentArr: number[];
+  leftPointer: number | null;
+  rightPointer: number | null;
+  middlePointer: number | null;
+}
+
+export function binarySearch(num: number, arr: number[], callback?: (state: binarySearchState) => void): number {
   let start = 0, end = arr.length -1;
+  callback?.(structuredClone({currentArr: arr, leftPointer: start, rightPointer: end, middlePointer: null}))
   while(start <= end) {
-    console.log(start, end);
     let mid = Math.floor((end + start) / 2);
-    console.log(mid);
+    callback?.(structuredClone({currentArr: arr, leftPointer: start, rightPointer: end, middlePointer: mid}))
     if (arr[mid] == num) return mid;
     if(num > arr[mid]) {
       start = mid + 1;
@@ -116,68 +128,107 @@ function binarySearch(num: number, arr: number[]): number {
       end = mid -1;
     }
   }
+  callback?.(structuredClone({currentArr: arr, leftPointer: start, rightPointer: end, middlePointer: null}))
   return -1;
 }
+
+
 
 console.log("Binary search for array:[1,2,3,4,5,7,8,19,20,21]:", binarySearch(19, [1,2,3,4,5,7,8,19,20,21]));
 
 
-function bubblesort(arr: number[]): number[] {
+export type bubbleSortstate = {
+currentArr: number[];
+currentPosition: number | null;
+currentPointer: number | null;
+}
+
+export function bubblesort(arr: number[], callback?: (state: bubbleSortstate) => void): number[] {
   let newArr = arr.slice();
-  
   for(let i = 0; i < newArr.length - 1; i++) {
+    callback?.(structuredClone({currentArr: newArr, currentPointer: i, currentPosition: null}))
     for(let j = 0; j < newArr.length - 1 - i; j++) {
+      callback?.(structuredClone({currentArr: newArr, currentPointer: i, currentPosition: j}))
       if (newArr[j] > newArr[j + 1]) {
         let temp = newArr[j];
         newArr[j] = newArr[j + 1];
         newArr[j + 1] = temp;
+        callback?.(structuredClone({currentArr: newArr, currentPointer: i, currentPosition: j}))
       }
     }
   }
+  callback?.(structuredClone({currentArr: newArr, currentPointer: null, currentPosition: null}))
   return newArr;
 }
 
 console.log("Bubble sort for ", [9,8,7,6,5,4,3], bubblesort([9,8,7,6,5,4,3]));
 
 
-function selectionSort(arr:number[]): number[] {
+export type SelectionSortState = {
+  currentArr: number[], // keeps track of swaps in the arr
+  currentPosition: number | null, // keeps track of the current position to be filled with next smallest elemenet
+  currentSmallestIdx: number | null, // keeps track of the smallest remaining element so far
+  currentPointer: number | null, // keeps track of where we are searching right now
+}
+
+
+// only really use this if you're planning to pass a callback
+// but it's serviceable and efficient even without a callback, just a few extra if statements.
+export function selectionSort(arr:number[], callback?: (state: SelectionSortState) => void): number[] {
   let newArr = arr.slice();
+
+  // for each position
   for (let i = 0; i < newArr.length; i++) {
-    let smallest = newArr[i];
-    let idx = i;
+    callback?.(structuredClone({currentArr: newArr, currentPosition: i, currentSmallestIdx: null, currentPointer: null}))
+    let smallestIdx = i
+    // find the smallest remaining element
     for(let j = i; j < newArr.length; j++) {
-      if (newArr[j] < smallest) {
-        smallest = newArr[j];
-        idx = j;
+      callback?.(structuredClone({currentArr: newArr, currentPosition: i, currentSmallestIdx: smallestIdx, currentPointer: j}))
+      if (newArr[j] < newArr[smallestIdx]) {
+        smallestIdx = j;
+        callback?.(structuredClone({currentArr: newArr, currentPosition: i, currentSmallestIdx: smallestIdx, currentPointer: j}))
       }
     }
-     let temp = newArr[i];
-      newArr[i] = newArr[idx];
-      newArr[idx] = temp;
+    // put the smallest remaining element in the left-most remaining position
+    [newArr[i], newArr[smallestIdx]] = [newArr[smallestIdx], newArr[i]]
+    callback?.(structuredClone({currentArr: newArr, currentPosition: null, currentSmallestIdx: null, currentPointer: null}))
   }
+
   return newArr;
 }
 console.log("Selection Sort for ", [9,8,7,6,5,4,3], selectionSort([9,8,7,6,5,4,3]));
 
+type insertionSortState = {
+  key: number | null;
+  leftIndex: number | null;
+  currentPointer: number | null;
+  currentArr: number[];
+}
 
-function insertionSort( arr: number[]): number[] {
+export function insertionSort( arr: number[], callback?: (state: insertionSortState) => void): number[] {
   let newArr = arr.slice();
+  callback?.(structuredClone({key: null, leftIndex: null, currentPointer: null, currentArr: newArr}))
   for(let i = 1; i < newArr.length; i++) {
     let key = newArr[i];
     let j = i - 1;
+    callback?.(structuredClone({key: key, leftIndex: j, currentPointer: i, currentArr: newArr}))
     while(j >= 0 && newArr[j] > key) {
+      callback?.(structuredClone({key: key, leftIndex: j, currentPointer: i, currentArr: newArr}))
       newArr[j + 1] = newArr[j];
       j--;
     }
 
     newArr[j + 1] = key;
+    callback?.(structuredClone({key: key, leftIndex: j, currentPointer: i, currentArr: newArr}))
   }
+
+  callback?.(structuredClone({key: null, leftIndex: null, currentPointer: null, currentArr: newArr}))
   return newArr;
 }
 
 console.log("InsertionSort for ", [9,8,7,6,5,4,3], insertionSort([9,8,7,6,5,4,3]));
 
-function combine(arr1: number[], arr2: number[]) {
+export function combine(arr1: number[], arr2: number[]) {
   let i = 0, j = 0;
   let arr: number[] = [];
   while(i < arr1.length && j < arr2.length) {
@@ -202,7 +253,7 @@ function combine(arr1: number[], arr2: number[]) {
   return arr;
 }
 
-function mergeSort(arr: number[]): number[] {
+export function mergeSort(arr: number[]): number[] {
   if (arr.length <= 1) return arr;
   let left = arr.slice(0, Math.floor(arr.length / 2));
   let right = arr.slice(Math.floor(arr.length / 2));
@@ -214,7 +265,7 @@ function mergeSort(arr: number[]): number[] {
 
 console.log("mergeSort for ", [9,8,7,6,5,4,3], mergeSort([9,8,7,6,5,4,3]));
 
-function quickSort(arr: number[]): number[] {
+export function quickSort(arr: number[]): number[] {
   if (arr.length <= 1) return arr;
   
   const pivotIndex = Math.floor(Math.random() * arr.length);
@@ -260,7 +311,7 @@ myGraph.printGraph();
 
 
 
-function treeDFS(root: Node<number> | null): void {
+export function treeDFS(root: TreeNode<number> | null): void {
   if(!root) {
     return;
   }
@@ -272,8 +323,8 @@ console.log("DFS tree traversal:");
 treeDFS(myTree.root);
 
 
-function treeBFS(root: Node<number> | null): void {
-  let queue: (Node<number> | null)[] = [];
+export function treeBFS(root: TreeNode<number> | null): void {
+  let queue: (TreeNode<number> | null)[] = [];
 
   if (root) {
     queue.push(root);
@@ -298,7 +349,7 @@ interface Edge<T> {
   weight: number;
 }
 
-function graphDFS(graph: Graph, startNodeId: string): void {
+export function graphDFS(graph: Graph, startNodeId: string): void {
   const visited = new Set<string>();
   
   function dfsHelper(nodeId: string): void {
@@ -317,7 +368,7 @@ function graphDFS(graph: Graph, startNodeId: string): void {
   dfsHelper(startNodeId);
 }
 
-function graphBFS(graph: Graph, startNode: string): void {
+export function graphBFS(graph: Graph, startNode: string): void {
   const visited = new Set<string>();
   const queue: string[] = [startNode];
   visited.add(startNode);
@@ -338,7 +389,7 @@ function graphBFS(graph: Graph, startNode: string): void {
   }
 }
 
-function dijkstra(graph: Graph, startNode: string, endNode: string) {
+export function dijkstra(graph: Graph, startNode: string, endNode: string) {
   const distance = new Map<string, number>();
   const previous = new Map<string, string | null>();
   const queue = new PriorityQueue<string>();
@@ -424,3 +475,4 @@ for (const test of testCases) {
   
   console.log(`  Test ${passed ? "PASSED" : "FAILED"}`);
 }
+
