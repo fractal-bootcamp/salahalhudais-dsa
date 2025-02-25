@@ -8,9 +8,8 @@ class PriorityQueue<T> {
     this.heap.sort((a,b) => a.priority - b.priority);
   }
 
-  dequeue(): undefined | boolean {
-    this.heap.shift;
-    return true;
+  dequeue(): T | undefined {
+    return this.heap.shift()?.value;
   }
   isEmpty(): boolean {
     return this.heap.length == 0;
@@ -18,7 +17,7 @@ class PriorityQueue<T> {
 }
 
 class Graph {
-  private adjacencyList: Map<string, {node: string, weight: string}[]> = new Map();
+  private adjacencyList: Map<string, {node: string, weight: number}[]> = new Map();
 
   addVertex(vertex1: string) {
     if(!this.adjacencyList.has(vertex1)) {
@@ -26,10 +25,67 @@ class Graph {
     }
   }
 
-  addEdge(vertex1: string, vertex2: string) {
-    this.adjacencyList.set(vertex1, [...])
+  addEdge(vertex1: string, vertex2: string, weight: number) {
+    this.adjacencyList.get(vertex1)?.push({node: vertex2, weight});
+    this.adjacencyList.get(vertex2)?.push({node: vertex1, weight});
+  }
+
+  getNeighbors(vertex1: string) {
+    return this.adjacencyList.get(vertex1) || [];
+  }
+
+  printGraph() {
+    console.log(this.adjacencyList);
   }
 }
+
+class Node<T> {
+  value: T;
+  left: Node<T> | null;
+  right: Node<T> | null;
+
+constructor(value: T) {
+      this.value = value;
+      this.left = null;
+      this.right = null;
+  }
+}
+
+class BinaryTree<T> {
+  root: Node<T> | null = null;
+
+  insert(value: T) {
+    const newNode = new Node(value);
+    if (!this.root) {
+      this.root = newNode;
+      return; 
+    }
+
+    let current = this.root;
+
+    while(true) {
+      if(current.value > value) {
+        if (current.left) {
+          current = current.left;
+        } else {
+          current.left = newNode;
+          return;
+        }
+      } else if(current.value < value) {
+        if (current.right) {
+          current = current.right;
+        } else {
+          current.right = newNode;
+          return;
+        }
+      } else {
+        // Value already exists
+        return;
+      }
+    }
+  }
+}
+
 
 function linearSearch(num: number, arr: number[]): number[] {
   let indices: number[] = [];
@@ -47,7 +103,7 @@ function binarySearch(num: number, arr: number[]): number {
   let start = 0, end = arr.length -1;
   while(start <= end) {
     console.log(start, end);
-    let mid = Math.ceil(((end + start) / 2));
+    let mid = Math.floor((end + start) / 2);
     console.log(mid);
     if (arr[mid] == num) return mid;
     if(num > arr[mid]) {
@@ -65,12 +121,12 @@ console.log("Binary search for array:[1,2,3,4,5,7,8,19,20,21]:", binarySearch(19
 function bubblesort(arr: number[]): number[] {
   let newArr = arr.slice();
   
-  for(let i = 0; i < newArr.length; i++) {
-    for(let j = 0; j < newArr.length; j++) {
+  for(let i = 0; i < newArr.length - 1; i++) {
+    for(let j = 0; j < newArr.length - 1 - i; j++) {
       if (newArr[j] > newArr[j + 1]) {
         let temp = newArr[j];
         newArr[j] = newArr[j + 1];
-       newArr[j+ 1] = temp;
+        newArr[j + 1] = temp;
       }
     }
   }
@@ -143,9 +199,9 @@ function combine(arr1: number[], arr2: number[]) {
 }
 
 function mergeSort(arr: number[]): number[] {
-  if (arr.length <= 1) return [arr[0]];
-  let left = arr.slice(0, arr.length / 2);
-  let right = arr.slice(arr.length / 2, arr.length);
+  if (arr.length <= 1) return arr;
+  let left = arr.slice(0, Math.floor(arr.length / 2));
+  let right = arr.slice(Math.floor(arr.length / 2));
 
   let l = mergeSort(left);
   let r = mergeSort(right);
@@ -155,20 +211,23 @@ function mergeSort(arr: number[]): number[] {
 console.log("mergeSort for ", [9,8,7,6,5,4,3], mergeSort([9,8,7,6,5,4,3]));
 
 function quickSort(arr: number[]): number[] {
-  let pivot = Math.floor(Math.random() * arr.length);
   if (arr.length <= 1) return arr;
-
+  
+  const pivotIndex = Math.floor(Math.random() * arr.length);
+  const pivot = arr[pivotIndex];
+  
   let left: number[] = [], right: number[] = [];
 
-  arr.forEach((el) => {
-    if (el >= arr[pivot]) {
-      right.push(el);
-    } else if (el < arr[pivot]) {
-      left.push(el);
+  for (let i = 0; i < arr.length; i++) {
+    if (i === pivotIndex) continue;
+    if (arr[i] < pivot) {
+      left.push(arr[i]);
+    } else {
+      right.push(arr[i]);
     }
-
-  })
-  return [...quickSort(left), ...quickSort(right)]
+  }
+  
+  return [...quickSort(left), pivot, ...quickSort(right)];
 }
 
 let arr: number[] = [9,8,7,6,5,4,3]
