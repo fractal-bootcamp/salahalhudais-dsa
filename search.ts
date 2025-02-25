@@ -37,6 +37,10 @@ class Graph {
   printGraph() {
     console.log(this.adjacencyList);
   }
+
+  getAllVertices() {
+    return Array.from(this.adjacencyList.keys());
+  }
 }
 
 class Node<T> {
@@ -233,3 +237,190 @@ function quickSort(arr: number[]): number[] {
 let arr: number[] = [9,8,7,6,5,4,3]
 console.log("quickSort for: [9,8,7,6,5,4,3]: ", quickSort(arr));
 
+
+const myTree = new BinaryTree<number>();
+myTree.insert(10);
+myTree.insert(5);
+myTree.insert(15);
+myTree.insert(3);
+myTree.insert(7);
+console.log("Created a binary tree with values: 10, 5, 15, 3, 7");
+
+const myGraph = new Graph();
+myGraph.addVertex("A");
+myGraph.addVertex("B");
+myGraph.addVertex("C");
+myGraph.addVertex("D");
+myGraph.addEdge("A", "B", 1);
+myGraph.addEdge("A", "C", 2);
+myGraph.addEdge("B", "D", 3);
+myGraph.addEdge("C", "D", 1);
+console.log("Created a graph with vertices A, B, C, D and edges between them:");
+myGraph.printGraph();
+
+
+
+function treeDFS(root: Node<number> | null): void {
+  if(!root) {
+    return;
+  }
+  console.log(root.value);
+  treeDFS(root.left);
+  treeDFS(root.right);
+}
+console.log("DFS tree traversal:");
+treeDFS(myTree.root);
+
+
+function treeBFS(root: Node<number> | null): void {
+  let queue: (Node<number> | null)[] = [];
+
+  if (root) {
+    queue.push(root);
+  }
+  while(queue.length) {
+    let current = queue.shift();
+
+    console.log(current?.value);
+
+    if (current?.left) queue.push(current?.left);
+    if(current?.right) queue.push(current?.right);
+  }
+}
+
+interface GraphNode<T> {
+  value: T;
+
+}
+
+interface Edge<T> {
+  node: T;
+  weight: number;
+}
+
+function graphDFS(graph: Graph, startNodeId: string): void {
+  const visited = new Set<string>();
+  
+  function dfsHelper(nodeId: string): void {
+    if (visited.has(nodeId)) {
+      return;
+    }
+    
+    visited.add(nodeId);
+    console.log(nodeId);
+
+    for (const edge of graph.getNeighbors(nodeId)) {
+      dfsHelper(edge.node);
+    }
+  }
+  
+  dfsHelper(startNodeId);
+}
+
+function graphBFS(graph: Graph, startNode: string): void {
+  const visited = new Set<string>();
+  const queue: string[] = [startNode];
+  visited.add(startNode);
+
+  while(queue.length) {
+    let current = queue.shift();
+
+    if(!current) continue;
+
+    console.log(current);
+
+    for(const edge of graph.getNeighbors(current)) {
+      if(!visited.has(edge.node)) {
+        visited.add(edge.node);
+        queue.push(edge.node);
+      }
+    }
+  }
+}
+
+function dijkstra(graph: Graph, startNode: string, endNode: string) {
+  const distance = new Map<string, number>();
+  const previous = new Map<string, string | null>();
+  const queue = new PriorityQueue<string>();
+  const visited = new Set<string>();
+
+  for(const vertex of graph.getAllVertices()) {
+    distance.set(vertex, Infinity);
+    previous.set(vertex, null);
+  }
+  distance.set(startNode, 0);
+  queue.enqueue(startNode, 0);
+  while(!queue.isEmpty()) {
+    let current = queue.dequeue();
+    if(!current) continue;
+    if (current == endNode) break;
+    if(visited.has(current)) continue;
+    visited.add(current);
+    for(const edge of graph.getNeighbors(current)) {
+      if(visited.has(edge.node)) continue;
+      const newDistance = distance.get(current)! + edge.weight;
+      if (newDistance && newDistance < distance.get(edge.node)!) {
+        distance.set(edge.node, newDistance);
+        previous.set(edge.node, current);
+        queue.enqueue(edge.node, newDistance);
+      }
+    }
+  }
+  const path: string[] = [];
+  let current = endNode;
+
+  if(!previous.get(endNode) === null && endNode != startNode) {
+    return {distance: Infinity, path: []};
+  }
+
+  while(current) {
+    path.unshift(current);
+    current = previous.get(current)!;
+    if(current === null) break;
+  }
+  return {
+    distance: distance.get(endNode)!,
+    path
+  };
+}
+
+// Test Dijkstra's algorithm
+console.log("Testing Dijkstra's algorithm:");
+
+// Create a test graph
+const testGraph = new Graph();
+testGraph.addVertex("A");
+testGraph.addVertex("B");
+testGraph.addVertex("C");
+testGraph.addVertex("D");
+testGraph.addVertex("E");
+
+// Add edges with weights
+testGraph.addEdge("A", "B", 4);
+testGraph.addEdge("A", "C", 2);
+testGraph.addEdge("B", "E", 3);
+testGraph.addEdge("C", "D", 2);
+testGraph.addEdge("C", "B", 1);
+testGraph.addEdge("D", "E", 3);
+
+// Test cases
+const testCases = [
+  { start: "A", end: "E", expectedDistance: 6, expectedPath: ["A", "C", "B", "E"] },
+  { start: "A", end: "D", expectedDistance: 4, expectedPath: ["A", "C", "D"] },
+  { start: "B", end: "C", expectedDistance: 1, expectedPath: ["B", "C"] }
+];
+
+// Run tests
+for (const test of testCases) {
+  const result = dijkstra(testGraph, test.start, test.end);
+  
+  console.log(`Path from ${test.start} to ${test.end}:`);
+  console.log(`  Expected distance: ${test.expectedDistance}, Got: ${result.distance}`);
+  console.log(`  Expected path: ${test.expectedPath.join(" → ")}`);
+  console.log(`  Actual path: ${result.path.join(" → ")}`);
+  
+  const passed = result.distance === test.expectedDistance && 
+                 JSON.stringify(result.path) === JSON.stringify(test.expectedPath);
+  
+  console.log(`  Test ${passed ? "PASSED" : "FAILED"}`);
+}
