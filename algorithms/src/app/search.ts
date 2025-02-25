@@ -228,51 +228,143 @@ export function insertionSort( arr: number[], callback?: (state: insertionSortSt
 
 console.log("InsertionSort for ", [9,8,7,6,5,4,3], insertionSort([9,8,7,6,5,4,3]));
 
-export function combine(arr1: number[], arr2: number[]) {
+type mergeSortState = {
+  currentArray: number[];     
+  leftArray: number[];       
+  rightArray: number[];      
+  leftIndex: number | null;  
+  rightIndex: number | null; 
+  mergeIndex: number | null;
+  depth: number; 
+  isMerging: boolean;
+}
+
+export function combine(arr1: number[], arr2: number[], callback?: (state: mergeSortState) => void): number[] {
   let i = 0, j = 0;
-  let arr: number[] = [];
-  while(i < arr1.length && j < arr2.length) {
+  let result: number[] = [];
+  
+  while (i < arr1.length && j < arr2.length) {
+    callback?.({
+      currentArray: [...result],
+      leftArray: arr1,
+      rightArray: arr2,
+      leftIndex: i,
+      rightIndex: j,
+      mergeIndex: result.length,
+      depth: 0,
+      isMerging: true
+    });
+
     if (arr1[i] <= arr2[j]) {
-      arr.push(arr1[i]);
+      result.push(arr1[i]);
       i++;
-    } else if (arr2[j] < arr1[i]) {
-      arr.push(arr2[j]);
+    } else {
+      result.push(arr2[j]);
       j++;
     }
   }
 
-  while(i <arr1.length) {
-    arr.push(arr1[i]);
+  while (i < arr1.length) {
+    callback?.({
+      currentArray: [...result],
+      leftArray: arr1,
+      rightArray: arr2,
+      leftIndex: i,
+      rightIndex: null,
+      mergeIndex: result.length,
+      depth: 0,
+      isMerging: true
+    });
+    result.push(arr1[i]);
     i++;
   }
-  
-  while(j < arr2.length) {
-    arr.push(arr2[j]);
+
+  while (j < arr2.length) {
+    callback?.({
+      currentArray: [...result],
+      leftArray: arr1,
+      rightArray: arr2,
+      leftIndex: null,
+      rightIndex: j,
+      mergeIndex: result.length,
+      depth: 0,
+      isMerging: true
+    });
+    result.push(arr2[j]);
     j++;
   }
-  return arr;
+
+  return result;
 }
 
-export function mergeSort(arr: number[]): number[] {
-  if (arr.length <= 1) return arr;
-  let left = arr.slice(0, Math.floor(arr.length / 2));
-  let right = arr.slice(Math.floor(arr.length / 2));
+export function mergeSort(arr: number[], callback?: (state: mergeSortState) => void, depth: number = 0): number[] {
+  if (arr.length <= 1) {
+    callback?.({
+      currentArray: [...arr],
+      leftArray: [],
+      rightArray: [],
+      leftIndex: null,
+      rightIndex: null,
+      mergeIndex: null,
+      depth: depth,
+      isMerging: false
+    });
+    return arr;
+  }
 
-  let l = mergeSort(left);
-  let r = mergeSort(right);
-  return combine(l,r);
+  const mid = Math.floor(arr.length / 2);
+  const left = arr.slice(0, mid);
+  const right = arr.slice(mid);
+
+  callback?.({
+    currentArray: [...arr],
+    leftArray: left,
+    rightArray: right,
+    leftIndex: null,
+    rightIndex: null,
+    mergeIndex: mid,
+    depth: depth,
+    isMerging: false
+  });
+
+  const sortedLeft = mergeSort(left, callback, depth + 1);
+  const sortedRight = mergeSort(right, callback, depth + 1);
+
+  const result = combine(sortedLeft, sortedRight, callback);
+
+  callback?.({
+    currentArray: [...result],
+    leftArray: sortedLeft,
+    rightArray: sortedRight,
+    leftIndex: null,
+    rightIndex: null,
+    mergeIndex: null,
+    depth: depth,
+    isMerging: true
+  });
+
+  return result;
 }
 
 console.log("mergeSort for ", [9,8,7,6,5,4,3], mergeSort([9,8,7,6,5,4,3]));
 
-export function quickSort(arr: number[]): number[] {
+
+type quickSortType = {
+  // todo:
+  currentArray: Number[];
+  leftArray: number[];
+  rightArray: number[];
+  leftIndex: number | null;
+  rightIndex: number | null;
+  pivotIndex: number | null;
+  depth: number;
+}
+
+export function quickSort(arr: number[], callback?: (state: quickSortType) => void): number[] {
   if (arr.length <= 1) return arr;
-  
   const pivotIndex = Math.floor(Math.random() * arr.length);
   const pivot = arr[pivotIndex];
-  
   let left: number[] = [], right: number[] = [];
-
   for (let i = 0; i < arr.length; i++) {
     if (i === pivotIndex) continue;
     if (arr[i] < pivot) {
@@ -310,6 +402,10 @@ console.log("Created a graph with vertices A, B, C, D and edges between them:");
 myGraph.printGraph();
 
 
+type treeDFSType = {
+  // todo:
+
+}
 
 export function treeDFS(root: TreeNode<number> | null): void {
   if(!root) {
@@ -347,6 +443,10 @@ interface GraphNode<T> {
 interface Edge<T> {
   node: T;
   weight: number;
+}
+
+type  graphType = {
+  // todo:
 }
 
 export function graphDFS(graph: Graph, startNodeId: string): void {
@@ -475,4 +575,10 @@ for (const test of testCases) {
   
   console.log(`  Test ${passed ? "PASSED" : "FAILED"}`);
 }
+
+
+
+
+
+
 

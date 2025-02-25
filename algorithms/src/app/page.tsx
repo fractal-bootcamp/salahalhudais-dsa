@@ -62,7 +62,7 @@ interface AlgorithmState {
 }
 
 export default function Home() {
-  const [arr, setArr] = useState([9, 8, 7, 6, 5, 4, 3, 2, 1]);
+  const [arr, setArr] = useState([9,8,7,6,5,4,3,2,1]);
   const [history, setHistory] = useState<AlgorithmState[]>([]);
   const [currentFrame, setCurrentFrame] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false)
@@ -161,7 +161,7 @@ export default function Home() {
     console.log("I AM ANIMATING")
     // if we are on the final index, stop advancing frames.
     if (isPlaying && currentFrame < history.length - 1){
-      setTimeout(() => setCurrentFrame(prev => prev+1), 50)
+      setTimeout(() => setCurrentFrame(prev => prev+1), 100)
     }
     // if we are on the final frame, stop playing
     if (currentFrame >= history.length - 1){
