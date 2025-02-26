@@ -7,7 +7,7 @@ import { bubblesort,
   selectionSort, 
   binarySearch, 
   quickSort, 
-  mergeSort, 
+  mergeSortHead, 
   treeDFS, 
   graphDFS, 
   treeBFS, 
@@ -28,9 +28,10 @@ type graphTraversalType = 'bfs' | 'dfs' | 'dijkstra' | null;
 
 // Generic algorithm state that works for all algorithms
 // todo: add recursive algorithms sort and graphs/trees traversals
+
 interface AlgorithmState {
   currentArr: number[];
-  currentIndex: number;
+  currentIndex: number | undefined
   comparingIndex?: number;
   sortedIndices?: number[];
   foundIndex?: number; 
@@ -51,7 +52,7 @@ interface AlgorithmState {
   pivotValue?: number | null;
   swapping?: boolean;
   isPartitioning?: boolean;
-  depth?: boolean | null;
+  depth?: number | null
 
 
   //trees
@@ -132,19 +133,30 @@ export default function Home() {
           });
           break;
         case 'quick':
+        case 'quick':
           quickSort(arr, (state) => {
-            let visualArr = [...state.currentArray];
-            if (state.!== null && state.leftIndex !== null) {
-              visualArr = state.currentArr.slice();
-            }
-
             const genericState: AlgorithmState = {
-              currentArr: visualArr,
-              currentIndex: state.currentPointer !== null ? state.currentPointer : 0,
-              comparingIndex: state.leftIndex !== null ? state.leftIndex : undefined,
-              keyValue: state.key !== null ? state.key : undefined
+              currentArr: state.currentArray,
+              currentIndex: state.leftIndex !== null ? state.leftIndex : undefined,
+              comparingIndex: state.rightIndex !== null ? state.rightIndex : undefined,
+              pivotIndex: state.pivotIndex,
+              pivotValue: state.pivotValue,
+              depth: state.depth
             };
             newHistory.push(genericState);
+          });
+          break;
+        case 'merge':
+          mergeSortHead(arr, (state) => {
+            newHistory.push({
+              currentArr: state.currentArray,
+              leftArray: state.leftArray,
+              rightArray: state.rightArray,
+              currentIndex: state.mergeIndex !== null ? state.mergeIndex : undefined,
+              comparingIndex: state.leftIndex !== null ? state.leftIndex : undefined,
+              depth: state.depth,
+              isMerging: state.isMerging
+            });
           });
           break;
       }

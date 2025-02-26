@@ -135,7 +135,7 @@ export function binarySearch(num: number, arr: number[], callback?: (state: bina
 
 
 
-console.log("Binary search for array:[1,2,3,4,5,7,8,19,20,21]:", binarySearch(19, [1,2,3,4,5,7,8,19,20,21]));
+console.log("Binary search for array:[1,2,3,4,5,7,8,19,20,21]:", binarySearch(21, [1,2,3,4,5,7,8,19,20,21]));
 
 
 export type bubbleSortstate = {
@@ -240,114 +240,105 @@ type mergeSortState = {
   isMerging: boolean;
 }
 
-export function combine(arr1: number[], arr2: number[], callback?: (state: mergeSortState) => void): number[] {
-  let i = 0, j = 0;
-  let result: number[] = [];
-  
-  while (i < arr1.length && j < arr2.length) {
-    callback?.({
-      currentArray: [...result],
-      leftArray: arr1,
-      rightArray: arr2,
-      leftIndex: i,
-      rightIndex: j,
-      mergeIndex: result.length,
-      depth: 0,
-      isMerging: true
-    });
 
-    if (arr1[i] <= arr2[j]) {
-      result.push(arr1[i]);
-      i++;
-    } else {
-      result.push(arr2[j]);
-      j++;
+export function mergeSortHead(arr: number[], callback?: (state: mergeSortState) => void): number[] {
+  const fullArray = [...arr];  // Keep track of full array state
+
+  function mergeSort(start: number, end: number, depth: number = 0): number[] {
+    if (end - start <= 1) {
+      callback?.({
+        currentArray: [...fullArray],
+        leftArray: [],
+        rightArray: [],
+        leftIndex: start,
+        rightIndex: end,
+        mergeIndex: null,
+        depth: depth,
+        isMerging: false
+      });
+      return fullArray.slice(start, end);
     }
-  }
 
-  while (i < arr1.length) {
+    const mid = Math.floor((start + end) / 2);
+    
+    // Show division state
     callback?.({
-      currentArray: [...result],
-      leftArray: arr1,
-      rightArray: arr2,
-      leftIndex: i,
-      rightIndex: null,
-      mergeIndex: result.length,
-      depth: 0,
-      isMerging: true
-    });
-    result.push(arr1[i]);
-    i++;
-  }
-
-  while (j < arr2.length) {
-    callback?.({
-      currentArray: [...result],
-      leftArray: arr1,
-      rightArray: arr2,
-      leftIndex: null,
-      rightIndex: j,
-      mergeIndex: result.length,
-      depth: 0,
-      isMerging: true
-    });
-    result.push(arr2[j]);
-    j++;
-  }
-
-  return result;
-}
-
-export function mergeSort(arr: number[], callback?: (state: mergeSortState) => void, depth: number = 0): number[] {
-  if (arr.length <= 1) {
-    callback?.({
-      currentArray: [...arr],
-      leftArray: [],
-      rightArray: [],
-      leftIndex: null,
-      rightIndex: null,
-      mergeIndex: null,
+      currentArray: [...fullArray],
+      leftArray: fullArray.slice(start, mid),
+      rightArray: fullArray.slice(mid, end),
+      leftIndex: start,
+      rightIndex: end,
+      mergeIndex: mid,
       depth: depth,
       isMerging: false
     });
-    return arr;
+
+    const sortedLeft = mergeSort(start, mid, depth + 1);
+    const sortedRight = mergeSort(mid, end, depth + 1);
+    
+    // Merge the sorted portions back into fullArray
+    const merged = helpercombine(sortedLeft, sortedRight);
+    for (let i = 0; i < merged.length; i++) {
+      fullArray[start + i] = merged[i];
+    }
+
+    callback?.({
+      currentArray: [...fullArray],
+      leftArray: sortedLeft,
+      rightArray: sortedRight,
+      leftIndex: start,
+      rightIndex: end,
+      mergeIndex: mid,
+      depth: depth,
+      isMerging: true
+    });
+
+    return merged;
   }
 
-  const mid = Math.floor(arr.length / 2);
-  const left = arr.slice(0, mid);
-  const right = arr.slice(mid);
+  function helpercombine(left: number[], right: number[]): number[] {
+    let result: number[] = [];
+    let i = 0, j = 0;
+    
+    while (i < left.length && j < right.length) {
+      callback?.({
+        currentArray: [...fullArray],
+        leftArray: left,
+        rightArray: right,
+        leftIndex: i,
+        rightIndex: j,
+        mergeIndex: result.length,
+        depth: 0,
+        isMerging: true
+      });
 
-  callback?.({
-    currentArray: [...arr],
-    leftArray: left,
-    rightArray: right,
-    leftIndex: null,
-    rightIndex: null,
-    mergeIndex: mid,
-    depth: depth,
-    isMerging: false
-  });
+      if (left[i] <= right[j]) {
+        result.push(left[i]);
+        i++;
+      } else {
+        result.push(right[j]);
+        j++;
+      }
+    }
 
-  const sortedLeft = mergeSort(left, callback, depth + 1);
-  const sortedRight = mergeSort(right, callback, depth + 1);
+    // Handle remaining elements
+    while (i < left.length) {
+      result.push(left[i]);
+      i++;
+    }
+    while (j < right.length) {
+      result.push(right[j]);
+      j++;
+    }
 
-  const result = combine(sortedLeft, sortedRight, callback);
+    return result;
+  }
 
-  callback?.({
-    currentArray: [...result],
-    leftArray: sortedLeft,
-    rightArray: sortedRight,
-    leftIndex: null,
-    rightIndex: null,
-    mergeIndex: null,
-    depth: depth,
-    isMerging: true
-  });
-
-  return result;
+  mergeSort(0, fullArray.length);
+  return fullArray;
 }
 
-console.log("mergeSort for ", [9,8,7,6,5,4,3], mergeSort([9,8,7,6,5,4,3]));
+console.log("mergeSort for ", [9,8,7,6,5,4,3], mergeSortHead([9,8,7,6,5,4,3]));
 
 
 type quickSortType = {
@@ -363,80 +354,71 @@ type quickSortType = {
   isPartitioning: boolean;
 }
 
-export function quickSort(arr: number[], callback?: (state: quickSortType) => void, depth: number = 0): number[] {
-  if (arr.length <= 1) {
+export function quickSort(arr: number[], callback?: (state: quickSortType) => void): number[] {
+  const fullArray = [...arr];
+
+  function quickSortHelper(start: number, end: number, depth: number = 0): void {
+    if (start >= end) return;
+
+    const pivotIndex = Math.floor(start + Math.random() * (end - start + 1));
+    const pivot = fullArray[pivotIndex];
+
     callback?.({
-      currentArray: [...arr], 
-      leftArray: [], 
-      rightArray: [], 
-      leftIndex: null, 
-      rightIndex: null, 
-      pivotIndex: null, 
-      depth: depth, 
-      swapping: false, 
-      isPartitioning: false, 
-      pivotValue: null 
+      currentArray: [...fullArray],
+      leftArray: [],
+      rightArray: [],
+      leftIndex: start,
+      rightIndex: end,
+      pivotIndex: pivotIndex,
+      pivotValue: pivot,
+      depth: depth,
+      swapping: false,
+      isPartitioning: false
     });
-    return arr;
-  }
 
-  const pivotIndex = Math.floor(Math.random() * arr.length);
-  const pivot = arr[pivotIndex];
-  let left: number[] = [], right: number[] = [];
-
-  callback?.({
-    currentArray: [...arr], 
-    leftArray: [], 
-    rightArray: [], 
-    leftIndex: null, 
-    rightIndex: null, 
-    pivotIndex: pivotIndex, 
-    depth: depth, 
-    swapping: false, 
-    isPartitioning: false, 
-    pivotValue: pivot 
-  });
-
-  for (let i = 0; i < arr.length; i++) {
-    if (i === pivotIndex) continue;
-    callback?.({
-      currentArray: [...arr], 
-      leftArray: [...left], 
-      rightArray: [...right], 
-      leftIndex: i, 
-      rightIndex: pivotIndex, 
-      pivotIndex: pivotIndex, 
-      depth: depth, 
-      swapping: false, 
-      isPartitioning: true, 
-      pivotValue: pivot 
-    });
+    [fullArray[pivotIndex], fullArray[end]] = [fullArray[end], fullArray[pivotIndex]];
     
-    if (arr[i] < pivot) {
-      left.push(arr[i]);
-    } else {
-      right.push(arr[i]);
+    let partitionIndex = start;
+    
+    for (let i = start; i < end; i++) {
+      if (fullArray[i] < pivot) {
+        callback?.({
+          currentArray: [...fullArray],
+          leftArray: fullArray.slice(start, partitionIndex),
+          rightArray: fullArray.slice(partitionIndex, end),
+          leftIndex: i,
+          rightIndex: partitionIndex,
+          pivotIndex: end,
+          pivotValue: pivot,
+          depth: depth,
+          swapping: true,
+          isPartitioning: true
+        });
+
+        [fullArray[i], fullArray[partitionIndex]] = [fullArray[partitionIndex], fullArray[i]];
+        partitionIndex++;
+      }
     }
+    [fullArray[partitionIndex], fullArray[end]] = [fullArray[end], fullArray[partitionIndex]];
+    callback?.({
+      currentArray: [...fullArray],
+      leftArray: fullArray.slice(start, partitionIndex),
+      rightArray: fullArray.slice(partitionIndex + 1, end + 1),
+      leftIndex: start,
+      rightIndex: end,
+      pivotIndex: partitionIndex,
+      pivotValue: pivot,
+      depth: depth,
+      swapping: false,
+      isPartitioning: false
+    });
+
+    quickSortHelper(start, partitionIndex - 1, depth + 1);
+    quickSortHelper(partitionIndex + 1, end, depth + 1);
   }
-  
-  const sortedLeft = quickSort(left, callback, depth + 1);
-  const sortedRight = quickSort(right, callback, depth + 1);
-  const result = [...sortedLeft, pivot, ...sortedRight];
 
-  callback?.({
-    currentArray: result, 
-    leftArray: sortedLeft, 
-    rightArray: sortedRight, 
-    leftIndex: null, 
-    rightIndex: null, 
-    pivotIndex: pivotIndex, 
-    depth: depth, 
-    swapping: false, 
-    isPartitioning: false, 
-    pivotValue: pivot 
-  });
-
-  return result;
+  quickSortHelper(0, fullArray.length - 1);
+  return fullArray;
 }
 
 let arr: number[] = [9,8,7,6,5,4,3]
