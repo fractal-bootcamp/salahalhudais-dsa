@@ -285,7 +285,7 @@ export default function Home() {
           )}
         </div>
 
-        {/* Array Input Section */}
+        {}
         <div className="w-full max-w-md">
           <div className="flex flex-col space-y-2">
             <label className="text-sm font-medium text-gray-700">Input Array</label>
@@ -294,11 +294,23 @@ export default function Home() {
                 type="text"
                 value={arr.join(', ')}
                 onChange={(e) => {
-                  const newArr = e.target.value
+                  const input = e.target.value;
+                  // Handle empty input
+                  if (!input) {
+                    setArr([]);
+                    return;
+                  }
+                  const newArr = input
                     .split(/[,\s]+/)
-                    .map(num => parseInt(num.trim()))
-                    .filter(num => !isNaN(num));
-                  if (newArr.length > 0) setArr(newArr);
+                    .map(str => str.trim())
+                    .filter(str => str.length > 0)
+                    .map(str => {
+                      const num = parseInt(str);
+                      return isNaN(num) ? null : num;
+                    })
+                    .filter((num): num is number => num !== null);
+
+                  setArr(newArr);
                 }}
                 placeholder="Enter numbers separated by commas"
                 className="flex-1 px-4 py-2 border rounded-lg bg-white text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -310,7 +322,10 @@ export default function Home() {
                 Reset
               </button>
             </div>
-            <p className="text-sm text-gray-500">Example: 9, 8, 7, 6, 5, 4, 3, 2, 1</p>
+            <div className="flex justify-between text-sm">
+              <p className="text-gray-500">Example: 9, 8, 7, 6, 5, 4, 3, 2, 1</p>
+              <p className="text-gray-500">Current length: {arr.length}</p>
+            </div>
           </div>
         </div>
       </div>
