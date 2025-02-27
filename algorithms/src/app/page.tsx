@@ -212,106 +212,172 @@ export default function Home() {
 
 
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold mb-4">Array Visualization</h1>
+    <div className="p-8 min-h-screen bg-gray-100">
+      <h1 className="text-3xl font-bold mb-8 text-gray-800 flex justify-center">Algorithm Visualizer</h1>
 
-      <div>
-        <div className="algorithm-type-selector">
+      {/* Algorithm Selection Section */}
+      <div className="mb-6 flex flex-col items-center space-y-4">
+        <div className="algorithm-type-selector space-x-4">
           <button
             onClick={() => {
               setsortType('selection');
               setalgorithmType(null);
             }}
-            className={sortType !== null ? 'active' : ""}
-          >Sorting</button>
+            className={`px-6 py-3 rounded-lg border shadow-sm transition-all ${
+              sortType !== null 
+                ? 'bg-blue-600 text-white border-blue-700 shadow-blue-200' 
+                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+            }`}
+          >
+            Sorting Algorithms
+          </button>
           <button
             onClick={() => {
               setalgorithmType('linear');
               setsortType(null);
             }}
-            className={searchType !== null ? 'active' : ""}
-            >
-              Searching
-            </button>
+            className={`px-6 py-3 rounded-lg border shadow-sm transition-all ${
+              searchType !== null 
+                ? 'bg-blue-600 text-white border-blue-700 shadow-blue-200' 
+                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+            }`}
+          >
+            Searching Algorithms
+          </button>
         </div>
-          
-        {sortType !== null && (
-          <select
-          value={sortType}
-          onChange={(e) => setsortType(e.target.value as sortType)}
-          >
-            <option value="selection">Selection Sort</option>
-            <option value="bubble">Bubble Sort</option>
-            <option value="quick">Quick Sort</option>
-            <option value="merge">Merge Sort</option>
-            <option value="insertion">Insertion Sort</option>
-          </select>
-        )}
         
-        {searchType !== null && (
-          <>
-          <select
-            value={searchType}
-            onChange={(e) => setalgorithmType(e.target.value as searchType)}
-          >
-            <option value="linear">Linear Search</option>
-            <option value="binary">Binary Search</option>
-          </select>
-          <input 
-          type="number" 
-          placeholder="Search target" 
-          value={searchTarget}
-          onChange={(e) => setSearchTarget(parseInt(e.target.value) || 0)}/>
-          </>
-        )}
-      </div>x
-
-      <div ref={animationParent} className="flex items-end mb-8">
-        {history[currentFrame]?.currentArr?.map((element: number, index: number) => {
-          const isCurrentIndex = index === history[currentFrame]?.currentIndex;
-          const isComparingIndex = index === history[currentFrame]?.comparingIndex;
-          const isKeyElement = history[currentFrame]?.keyValue !== undefined && 
-                               element === history[currentFrame]?.keyValue;
-          
-          let className = "w-10 mr-1 flex items-center justify-center text-white";
-          
-          if (isCurrentIndex) {
-            className += " bg-green-500";
-          } else if (isComparingIndex) {
-            className += " bg-yellow-500";
-          } else if (isKeyElement) {
-            className += " bg-purple-500";
-          } else {
-            className += " bg-blue-500";
-          }
-          
-          return (
-            <div
-              key={`${index}-${element}`} 
-              className={className}
-              style={{ height: `${element * 20}px` }}
+        {/* Algorithm Dropdown Section */}
+        <div className="w-full max-w-md">
+          {sortType !== null && (
+            <select
+              value={sortType}
+              onChange={(e) => setsortType(e.target.value as sortType)}
+              className="w-full px-4 py-2 border rounded-lg bg-white text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              {element}
+              <option value="">Select a Sorting Algorithm</option>
+              <option value="selection">Selection Sort</option>
+              <option value="bubble">Bubble Sort</option>
+              <option value="quick">Quick Sort</option>
+              <option value="merge">Merge Sort</option>
+              <option value="insertion">Insertion Sort</option>
+            </select>
+          )}
+          
+          {searchType !== null && (
+            <div className="flex space-x-4">
+              <select
+                value={searchType}
+                onChange={(e) => setalgorithmType(e.target.value as searchType)}
+                className="flex-1 px-4 py-2 border rounded-lg bg-white text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select a Search Algorithm</option>
+                <option value="linear">Linear Search</option>
+                <option value="binary">Binary Search</option>
+              </select>
+              <input 
+                type="number" 
+                placeholder="Search target" 
+                value={searchTarget}
+                onChange={(e) => setSearchTarget(parseInt(e.target.value) || 0)}
+                className="w-32 px-4 py-2 border rounded-lg bg-white text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
             </div>
-          );
-        })}
-        <button
-         
-          className="ml-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          onClick={() => setIsPlaying(true)}
-        >
-          Sort
-        </button>
-        <button
-          className="ml-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          onClick={() => setCurrentFrame(0)}
-        >
-          Reset
-        </button>
+          )}
+        </div>
+
+        {}
+        <div className="w-full max-w-md">
+          <div className="flex flex-col space-y-2">
+            <label className="text-sm font-medium text-gray-700">Input Array</label>
+            <div className="flex space-x-2">
+              <input
+                type="text"
+                value={arr.join(', ')}
+                onChange={(e) => {
+                  const input = e.target.value;
+                  // Handle empty input
+                  if (!input) {
+                    setArr([]);
+                    return;
+                  }
+                  const newArr = input
+                    .split(/[,\s]+/)
+                    .map(str => str.trim())
+                    .filter(str => str.length > 0)
+                    .map(str => {
+                      const num = parseInt(str);
+                      return isNaN(num) ? null : num;
+                    })
+                    .filter((num): num is number => num !== null);
+
+                  setArr(newArr);
+                }}
+                placeholder="Enter numbers separated by commas"
+                className="flex-1 px-4 py-2 border rounded-lg bg-white text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <button
+                onClick={() => setArr([9,8,7,6,5,4,3,2,1])}
+                className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+              >
+                Reset
+              </button>
+            </div>
+            <div className="flex justify-between text-sm">
+              <p className="text-gray-500">Example: 9, 8, 7, 6, 5, 4, 3, 2, 1</p>
+              <p className="text-gray-500">Current length: {arr.length}</p>
+            </div>
+          </div>
+        </div>
       </div>
-      <div className="border rounded p-4">
-        <h2 className="text-xl font-bold mb-4">Algorithm Flow</h2>
+
+      <div className="bg-white p-8 rounded-lg shadow-lg">
+        <div ref={animationParent} className="flex items-end justify-center mb-8 h-64">
+          {history[currentFrame]?.currentArr?.map((element: number, index: number) => {
+            const isCurrentIndex = index === history[currentFrame]?.currentIndex;
+            const isComparingIndex = index === history[currentFrame]?.comparingIndex;
+            const isKeyElement = history[currentFrame]?.keyValue !== undefined && 
+                               element === history[currentFrame]?.keyValue;
+            
+            let className = "w-16 mx-1 flex items-center justify-center text-white rounded-t-lg";
+            
+            if (isCurrentIndex) {
+              className += " bg-green-500";
+            } else if (isComparingIndex) {
+              className += " bg-yellow-500";
+            } else if (isKeyElement) {
+              className += " bg-purple-500";
+            } else {
+              className += " bg-blue-500";
+            }
+            
+            return (
+              <div
+                key={`${index}-${element}`} 
+                className={className}
+                style={{ height: `${element * 20}px` }}
+              >
+                {element}
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="flex justify-center space-x-4">
+          <button
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+            onClick={() => setIsPlaying(true)}
+          >
+            Sort
+          </button>
+          <button
+            className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-medium"
+            onClick={() => setCurrentFrame(0)}
+          >
+            Reset
+          </button>
+        </div>
       </div>
     </div>
   );
 }
+  
