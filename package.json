@@ -7,5 +7,9 @@
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@types/react": "^19.0.10",
+    "@types/vis": "^4.21.27"
   }
 }

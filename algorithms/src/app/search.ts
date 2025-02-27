@@ -1,5 +1,6 @@
+import { start } from "repl";
 // Data Structures & Algorithms
-class PriorityQueue<T> {
+export class PriorityQueue<T> {
   private heap: {value : T, priority: number}[] = [];
 
 
@@ -16,7 +17,7 @@ class PriorityQueue<T> {
   }
 }
 
-class Graph {
+export class Graph {
   private adjacencyList: Map<string, {node: string, weight: number}[]> = new Map();
 
   addVertex(vertex1: string) {
@@ -44,7 +45,7 @@ class Graph {
 }
 
 // Rename Node to TreeNode to avoid conflict with DOM's Node type
-class TreeNode<T> {
+export class TreeNode<T> {
   value: T;
   left: TreeNode<T> | null;
   right: TreeNode<T> | null;
@@ -56,7 +57,7 @@ class TreeNode<T> {
   }
 }
 
-class BinaryTree<T> {
+export class BinaryTree<T> {
   root: TreeNode<T> | null = null;
 
   insert(value: T) {
@@ -134,7 +135,7 @@ export function binarySearch(num: number, arr: number[], callback?: (state: bina
 
 
 
-console.log("Binary search for array:[1,2,3,4,5,7,8,19,20,21]:", binarySearch(19, [1,2,3,4,5,7,8,19,20,21]));
+console.log("Binary search for array:[1,2,3,4,5,7,8,19,20,21]:", binarySearch(21, [1,2,3,4,5,7,8,19,20,21]));
 
 
 export type bubbleSortstate = {
@@ -165,10 +166,10 @@ console.log("Bubble sort for ", [9,8,7,6,5,4,3], bubblesort([9,8,7,6,5,4,3]));
 
 
 export type SelectionSortState = {
-  currentArr: number[], // keeps track of swaps in the arr
-  currentPosition: number | null, // keeps track of the current position to be filled with next smallest elemenet
-  currentSmallestIdx: number | null, // keeps track of the smallest remaining element so far
-  currentPointer: number | null, // keeps track of where we are searching right now
+  currentArr: number[],
+  currentPosition: number | null,
+  currentSmallestIdx: number | null,
+  currentPointer: number | null, 
 }
 
 
@@ -239,142 +240,185 @@ type mergeSortState = {
   isMerging: boolean;
 }
 
-export function combine(arr1: number[], arr2: number[], callback?: (state: mergeSortState) => void): number[] {
-  let i = 0, j = 0;
-  let result: number[] = [];
-  
-  while (i < arr1.length && j < arr2.length) {
-    callback?.({
-      currentArray: [...result],
-      leftArray: arr1,
-      rightArray: arr2,
-      leftIndex: i,
-      rightIndex: j,
-      mergeIndex: result.length,
-      depth: 0,
-      isMerging: true
-    });
 
-    if (arr1[i] <= arr2[j]) {
-      result.push(arr1[i]);
-      i++;
-    } else {
-      result.push(arr2[j]);
-      j++;
+export function mergeSortHead(arr: number[], callback?: (state: mergeSortState) => void): number[] {
+  const fullArray = [...arr];  // Keep track of full array state
+
+  function mergeSort(start: number, end: number, depth: number = 0): number[] {
+    if (end - start <= 1) {
+      callback?.({
+        currentArray: [...fullArray],
+        leftArray: [],
+        rightArray: [],
+        leftIndex: start,
+        rightIndex: end,
+        mergeIndex: null,
+        depth: depth,
+        isMerging: false
+      });
+      return fullArray.slice(start, end);
     }
-  }
 
-  while (i < arr1.length) {
+    const mid = Math.floor((start + end) / 2);
+    
+    // Show division state
     callback?.({
-      currentArray: [...result],
-      leftArray: arr1,
-      rightArray: arr2,
-      leftIndex: i,
-      rightIndex: null,
-      mergeIndex: result.length,
-      depth: 0,
-      isMerging: true
-    });
-    result.push(arr1[i]);
-    i++;
-  }
-
-  while (j < arr2.length) {
-    callback?.({
-      currentArray: [...result],
-      leftArray: arr1,
-      rightArray: arr2,
-      leftIndex: null,
-      rightIndex: j,
-      mergeIndex: result.length,
-      depth: 0,
-      isMerging: true
-    });
-    result.push(arr2[j]);
-    j++;
-  }
-
-  return result;
-}
-
-export function mergeSort(arr: number[], callback?: (state: mergeSortState) => void, depth: number = 0): number[] {
-  if (arr.length <= 1) {
-    callback?.({
-      currentArray: [...arr],
-      leftArray: [],
-      rightArray: [],
-      leftIndex: null,
-      rightIndex: null,
-      mergeIndex: null,
+      currentArray: [...fullArray],
+      leftArray: fullArray.slice(start, mid),
+      rightArray: fullArray.slice(mid, end),
+      leftIndex: start,
+      rightIndex: end,
+      mergeIndex: mid,
       depth: depth,
       isMerging: false
     });
-    return arr;
+
+    const sortedLeft = mergeSort(start, mid, depth + 1);
+    const sortedRight = mergeSort(mid, end, depth + 1);
+    
+    // Merge the sorted portions back into fullArray
+    const merged = helpercombine(sortedLeft, sortedRight);
+    for (let i = 0; i < merged.length; i++) {
+      fullArray[start + i] = merged[i];
+    }
+
+    callback?.({
+      currentArray: [...fullArray],
+      leftArray: sortedLeft,
+      rightArray: sortedRight,
+      leftIndex: start,
+      rightIndex: end,
+      mergeIndex: mid,
+      depth: depth,
+      isMerging: true
+    });
+
+    return merged;
   }
 
-  const mid = Math.floor(arr.length / 2);
-  const left = arr.slice(0, mid);
-  const right = arr.slice(mid);
+  function helpercombine(left: number[], right: number[]): number[] {
+    let result: number[] = [];
+    let i = 0, j = 0;
+    
+    while (i < left.length && j < right.length) {
+      callback?.({
+        currentArray: [...fullArray],
+        leftArray: left,
+        rightArray: right,
+        leftIndex: i,
+        rightIndex: j,
+        mergeIndex: result.length,
+        depth: 0,
+        isMerging: true
+      });
 
-  callback?.({
-    currentArray: [...arr],
-    leftArray: left,
-    rightArray: right,
-    leftIndex: null,
-    rightIndex: null,
-    mergeIndex: mid,
-    depth: depth,
-    isMerging: false
-  });
+      if (left[i] <= right[j]) {
+        result.push(left[i]);
+        i++;
+      } else {
+        result.push(right[j]);
+        j++;
+      }
+    }
 
-  const sortedLeft = mergeSort(left, callback, depth + 1);
-  const sortedRight = mergeSort(right, callback, depth + 1);
+    // Handle remaining elements
+    while (i < left.length) {
+      result.push(left[i]);
+      i++;
+    }
+    while (j < right.length) {
+      result.push(right[j]);
+      j++;
+    }
 
-  const result = combine(sortedLeft, sortedRight, callback);
+    return result;
+  }
 
-  callback?.({
-    currentArray: [...result],
-    leftArray: sortedLeft,
-    rightArray: sortedRight,
-    leftIndex: null,
-    rightIndex: null,
-    mergeIndex: null,
-    depth: depth,
-    isMerging: true
-  });
-
-  return result;
+  mergeSort(0, fullArray.length);
+  return fullArray;
 }
 
-console.log("mergeSort for ", [9,8,7,6,5,4,3], mergeSort([9,8,7,6,5,4,3]));
+console.log("mergeSort for ", [9,8,7,6,5,4,3], mergeSortHead([9,8,7,6,5,4,3]));
 
 
 type quickSortType = {
-  // todo:
-  currentArray: Number[];
+  currentArray: number[];
   leftArray: number[];
   rightArray: number[];
   leftIndex: number | null;
   rightIndex: number | null;
   pivotIndex: number | null;
-  depth: number;
+  pivotValue:  number | null;
+  depth: number | null
+  swapping: boolean;
+  isPartitioning: boolean;
 }
 
 export function quickSort(arr: number[], callback?: (state: quickSortType) => void): number[] {
-  if (arr.length <= 1) return arr;
-  const pivotIndex = Math.floor(Math.random() * arr.length);
-  const pivot = arr[pivotIndex];
-  let left: number[] = [], right: number[] = [];
-  for (let i = 0; i < arr.length; i++) {
-    if (i === pivotIndex) continue;
-    if (arr[i] < pivot) {
-      left.push(arr[i]);
-    } else {
-      right.push(arr[i]);
+  const fullArray = [...arr];
+
+  function quickSortHelper(start: number, end: number, depth: number = 0): void {
+    if (start >= end) return;
+
+    const pivotIndex = Math.floor(start + Math.random() * (end - start + 1));
+    const pivot = fullArray[pivotIndex];
+
+    callback?.({
+      currentArray: [...fullArray],
+      leftArray: [],
+      rightArray: [],
+      leftIndex: start,
+      rightIndex: end,
+      pivotIndex: pivotIndex,
+      pivotValue: pivot,
+      depth: depth,
+      swapping: false,
+      isPartitioning: false
+    });
+
+    [fullArray[pivotIndex], fullArray[end]] = [fullArray[end], fullArray[pivotIndex]];
+    
+    let partitionIndex = start;
+    
+    for (let i = start; i < end; i++) {
+      if (fullArray[i] < pivot) {
+        callback?.({
+          currentArray: [...fullArray],
+          leftArray: fullArray.slice(start, partitionIndex),
+          rightArray: fullArray.slice(partitionIndex, end),
+          leftIndex: i,
+          rightIndex: partitionIndex,
+          pivotIndex: end,
+          pivotValue: pivot,
+          depth: depth,
+          swapping: true,
+          isPartitioning: true
+        });
+
+        [fullArray[i], fullArray[partitionIndex]] = [fullArray[partitionIndex], fullArray[i]];
+        partitionIndex++;
+      }
     }
+    [fullArray[partitionIndex], fullArray[end]] = [fullArray[end], fullArray[partitionIndex]];
+    callback?.({
+      currentArray: [...fullArray],
+      leftArray: fullArray.slice(start, partitionIndex),
+      rightArray: fullArray.slice(partitionIndex + 1, end + 1),
+      leftIndex: start,
+      rightIndex: end,
+      pivotIndex: partitionIndex,
+      pivotValue: pivot,
+      depth: depth,
+      swapping: false,
+      isPartitioning: false
+    });
+
+    quickSortHelper(start, partitionIndex - 1, depth + 1);
+    quickSortHelper(partitionIndex + 1, end, depth + 1);
   }
-  
-  return [...quickSort(left), pivot, ...quickSort(right)];
+
+  quickSortHelper(0, fullArray.length - 1);
+  return fullArray;
 }
 
 let arr: number[] = [9,8,7,6,5,4,3]
@@ -403,82 +447,193 @@ myGraph.printGraph();
 
 
 type treeDFSType = {
-  // todo:
-
+  depth: number;
+  visited: number[];
+  isLeaf: boolean;
+  parentValue: number | null;
+  currentNode: TreeNode<number>
+  stack: TreeNode<number>[];
 }
 
-export function treeDFS(root: TreeNode<number> | null): void {
-  if(!root) {
+export function treeDFS(
+  root: TreeNode<number> | null, 
+  callback?: (state: treeDFSType) => void, 
+  depth: number = 0,
+  visited: number[] = [],
+  stack: TreeNode<number>[] = []
+): void {
+  if (!root) {
     return;
   }
-  console.log(root.value);
-  treeDFS(root.left);
-  treeDFS(root.right);
+
+  const isLeaf = !root.left && !root.right;
+  stack.push(root);
+  visited.push(root.value);
+
+  callback?.({
+    depth: depth,
+    isLeaf: isLeaf,
+    currentNode: root,
+    parentValue: stack[stack.length - 2]?.value ?? null,
+    stack: [...stack],
+    visited: [...visited]
+  });
+
+  treeDFS(root.left, callback, depth + 1, visited, stack);
+  treeDFS(root.right, callback, depth + 1, visited, stack);
+  stack.pop();
 }
 console.log("DFS tree traversal:");
 treeDFS(myTree.root);
 
 
-export function treeBFS(root: TreeNode<number> | null): void {
+
+type treeBFS = {
+  currentNode: TreeNode<number> | null;
+  queue: (TreeNode<number> | null)[];
+  depth: number;
+  isLeaf: boolean;
+  parentValue: TreeNode<number>[];
+  visited: number[];
+}
+
+export function treeBFS(root: TreeNode<number> | null, callback?: (state: treeBFS) => void, depth: number = 0): void {
   let queue: (TreeNode<number> | null)[] = [];
+  let visited: number[] = [];
 
   if (root) {
     queue.push(root);
+    callback?.({
+      currentNode: root,
+      queue: [...queue],
+      depth: depth,
+      isLeaf: !root.left && !root.right,
+      parentValue: [],
+      visited: []
+    });
   }
+
   while(queue.length) {
     let current = queue.shift();
+    if (!current) continue;
 
-    console.log(current?.value);
+    visited.push(current.value);
+    const isLeaf = !current.left && !current.right;
 
-    if (current?.left) queue.push(current?.left);
-    if(current?.right) queue.push(current?.right);
+    callback?.({
+      currentNode: current,
+      queue: [...queue],
+      depth: depth,
+      isLeaf: isLeaf,
+      parentValue: [],
+      visited: [...visited]
+    });
+
+    if (current.left) queue.push(current.left);
+    if (current.right) queue.push(current.right);
   }
 }
 
 interface GraphNode<T> {
   value: T;
-
 }
-
 interface Edge<T> {
   node: T;
   weight: number;
 }
-
 type  graphType = {
-  // todo:
+  visited: Set<string>;
+  currentNode: string | null;
+  graph: Graph;  
 }
 
-export function graphDFS(graph: Graph, startNodeId: string): void {
+type GraphTraversalState = {
+  visited: Set<string>;
+  currentNode: string,
+  neighbors: string[],
+  graph: Graph;
+  depth: number;
+
+}
+
+type graphDFSState = Partial<GraphTraversalState> & {
+  stack: string[],
+}
+
+export function graphDFS(graph: Graph, startNodeId: string, callback?: (state: graphDFSState) => void): void {
   const visited = new Set<string>();
-  
-  function dfsHelper(nodeId: string): void {
+  const stack: string[] = [];
+  callback?.({
+    visited: new Set(),
+    currentNode: startNodeId,
+    stack: [],
+    neighbors: graph.getNeighbors(startNodeId).map(edge => edge.node),
+    graph: graph,
+    depth: 0
+  });
+
+  function dfsHelper(nodeId: string, depth: number = 0): void {
     if (visited.has(nodeId)) {
       return;
     }
     
     visited.add(nodeId);
-    console.log(nodeId);
+    stack.push(nodeId);
+
+    const neighbors = graph.getNeighbors(nodeId).map(edge => edge.node);
+
+    callback?.({
+      visited: new Set(visited),  
+      currentNode: nodeId,
+      stack: [...stack],
+      neighbors: [...neighbors],
+      graph: graph,
+      depth: depth
+    });
 
     for (const edge of graph.getNeighbors(nodeId)) {
-      dfsHelper(edge.node);
+      dfsHelper(edge.node, depth + 1);
     }
+
+    stack.pop();
   }
   
   dfsHelper(startNodeId);
 }
 
-export function graphBFS(graph: Graph, startNode: string): void {
+type graphBFSState = Partial<GraphTraversalState> & {
+  queue: string[];
+}
+
+export function graphBFS(graph: Graph, startNode: string, callback?: (state: graphBFSState) => void): void {
   const visited = new Set<string>();
   const queue: string[] = [startNode];
+
+  callback?.({
+    visited: new Set(),
+    currentNode: startNode,
+    queue: [startNode],
+    neighbors: graph.getNeighbors(startNode).map(edge => edge.node),
+    graph: graph,
+    depth: 0
+  });
+
   visited.add(startNode);
 
   while(queue.length) {
     let current = queue.shift();
-
     if(!current) continue;
 
-    console.log(current);
+    const neighbors = graph.getNeighbors(current).map(edge => edge.node);
+    
+    callback?.({
+      visited: new Set(visited),
+      currentNode: current,
+      queue: [...queue],
+      neighbors: [...neighbors],
+      graph: graph,
+      depth: visited.size - 1
+    });
 
     for(const edge of graph.getNeighbors(current)) {
       if(!visited.has(edge.node)) {
@@ -488,51 +643,122 @@ export function graphBFS(graph: Graph, startNode: string): void {
     }
   }
 }
+type graphDijkstra = GraphTraversalState & {
+  queue: PriorityQueue<string>;
+  distances: Map<string, number>;
+  previous: Map<string, string | null>;
+  shortestPath: string[];
+  currentDistance: number;
+}
 
-export function dijkstra(graph: Graph, startNode: string, endNode: string) {
-  const distance = new Map<string, number>();
+export function dijkstra(graph: Graph, startNode: string, endNode: string, callback?: (state: graphDijkstra) => void) {
+  const distances = new Map<string, number>();
   const previous = new Map<string, string | null>();
   const queue = new PriorityQueue<string>();
   const visited = new Set<string>();
 
+  
   for(const vertex of graph.getAllVertices()) {
-    distance.set(vertex, Infinity);
+    distances.set(vertex, Infinity);
     previous.set(vertex, null);
   }
-  distance.set(startNode, 0);
+  distances.set(startNode, 0);
   queue.enqueue(startNode, 0);
+  callback?.({
+    visited: new Set<string>(),
+    currentNode: startNode,
+    neighbors: graph.getNeighbors(startNode).map(edge => edge.node),
+    graph: graph,
+    depth: 0,
+    queue: structuredClone(queue),
+    distances: new Map(distances),
+    previous: new Map(previous),
+    currentDistance: 0,
+    shortestPath: [startNode]
+  });
+
   while(!queue.isEmpty()) {
-    let current = queue.dequeue();
+    const current = queue.dequeue();
     if(!current) continue;
-    if (current == endNode) break;
+    if (current === endNode) {
+      const currentPath = buildPath(previous, current);
+      callback?.({
+        visited: new Set(visited),
+        currentNode: current,
+        neighbors: graph.getNeighbors(current).map(edge => edge.node),
+        graph: graph,
+        depth: visited.size,
+        queue: structuredClone(queue),
+        distances: new Map(distances),
+        previous: new Map(previous),
+        currentDistance: distances.get(current) || 0,
+        shortestPath: currentPath
+      });
+      break;
+    }
     if(visited.has(current)) continue;
     visited.add(current);
+    const currentPath = buildPath(previous, current);
+    callback?.({
+      visited: new Set(visited),
+      currentNode: current,
+      neighbors: graph.getNeighbors(current).map(edge => edge.node),
+      graph: graph,
+      depth: visited.size,
+      queue: structuredClone(queue),
+      distances: new Map(distances),
+      previous: new Map(previous),
+      currentDistance: distances.get(current) || 0,
+      shortestPath: currentPath
+    });
+    
     for(const edge of graph.getNeighbors(current)) {
       if(visited.has(edge.node)) continue;
-      const newDistance = distance.get(current)! + edge.weight;
-      if (newDistance && newDistance < distance.get(edge.node)!) {
-        distance.set(edge.node, newDistance);
+      
+      const tentativeDistance = (distances.get(current) || 0) + edge.weight;
+      
+      if (tentativeDistance < (distances.get(edge.node) || Infinity)) {
+        distances.set(edge.node, tentativeDistance);
         previous.set(edge.node, current);
-        queue.enqueue(edge.node, newDistance);
+        queue.enqueue(edge.node, tentativeDistance);
+        
+        // Neighbor update state callback
+        const neighborPath = buildPath(previous, edge.node);
+        callback?.({
+          visited: new Set(visited),
+          currentNode: edge.node,
+          neighbors: graph.getNeighbors(current).map(e => e.node),
+          graph: graph,
+          depth: visited.size,
+          queue: structuredClone(queue),
+          distances: new Map(distances),
+          previous: new Map(previous),
+          currentDistance: tentativeDistance,
+          shortestPath: neighborPath
+        });
       }
     }
   }
-  const path: string[] = [];
-  let current = endNode;
 
-  if(!previous.get(endNode) === null && endNode != startNode) {
-    return {distance: Infinity, path: []};
-  }
-
-  while(current) {
-    path.unshift(current);
-    current = previous.get(current)!;
-    if(current === null) break;
-  }
+  const path = buildPath(previous, endNode);
+  
   return {
-    distance: distance.get(endNode)!,
+    distance: distances.get(endNode) || Infinity,
     path
   };
+}
+
+function buildPath(previous: Map<string, string | null>, endNode: string): string[] {
+  const path: string[] = [];
+  let current = endNode;
+  
+  while(current) {
+    path.unshift(current);
+    current = previous.get(current) || '';
+    if(current === null || current === '') break;
+  }
+  
+  return path;
 }
 
 // Test Dijkstra's algorithm

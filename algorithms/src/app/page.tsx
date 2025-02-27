@@ -1,28 +1,76 @@
 'use client'
 import { useEffect, useRef, useState } from "react";
-import { useCallback } from "react";
 import 'reactflow/dist/style.css';
-import { bubblesort, insertionSort, linearSearch, selectionSort, SelectionSortState, binarySearch } from "./search";
+import { bubblesort, 
+  insertionSort, 
+  linearSearch, 
+  selectionSort, 
+  binarySearch, 
+  quickSort, 
+  mergeSortHead, 
+  treeDFS, 
+  graphDFS, 
+  treeBFS, 
+  graphBFS, 
+  dijkstra, 
+  Graph,
+  PriorityQueue
+} from "./search";
 import autoAnimate from "@formkit/auto-animate";
-import type { Network } from 'vis-network';
-import vis from "vis-network/declarations/index-legacy-bundle";
-// Remove the react-graph-vis import as it can't be found
-// We'll need to implement our own graph visualization or use a different library
+import { TreeNode } from "./search";
 
 
+type algorithmCategory = 'array' | 'tree' | 'graph' | null;
 type searchType = 'linear' | 'binary' | null;
 type sortType = 'selection' | 'bubble' | 'quick' | 'merge' | 'insertion' | null;
+type treeTraversalType = 'bfs' | 'dfs' | null;
+type graphTraversalType = 'bfs' | 'dfs' | 'dijkstra' | null;
 
 // Generic algorithm state that works for all algorithms
+// todo: add recursive algorithms sort and graphs/trees traversals
+
 interface AlgorithmState {
   currentArr: number[];
-  currentIndex: number;
+  currentIndex: number | undefined
   comparingIndex?: number;
   sortedIndices?: number[];
   foundIndex?: number; 
   isSearching?: boolean;
   targetValue?: number;
   keyValue?: number;
+
+  //merge sort
+  leftIndex?: number | null;
+  rightIndex?: number | null;
+  mergeIndex?: number | null;
+  isMerging?: boolean;
+
+  // quicksort
+  leftArray?: number[];
+  rightArray?: number[];
+  pivotIndex?: number | null;
+  pivotValue?: number | null;
+  swapping?: boolean;
+  isPartitioning?: boolean;
+  depth?: number | null
+
+
+  //trees
+  visited?: number[];
+  isLeaf?: boolean;
+  parentValue?: number | null;
+  currentNode?: TreeNode<number>
+  stack?: TreeNode<number>[];
+
+  // graph
+  graphVisited?: Set<string>;
+  neighbors?: string[];
+  graph?: Graph;
+  stackGraph?: string[];
+  queue?: string[];
+  queueGraph?: PriorityQueue<string>;
+  shortestPath?: string[],
+  distances?: Map<string, number>;
 }
 
 export default function Home() {
@@ -35,39 +83,6 @@ export default function Home() {
   const [searchTarget, setSearchTarget] = useState<number>(0);
   
   const animationParent = useRef(null)
-
-
-  const graph = {
-    nodes: [
-      { id: 1, label: "Node 1", title: "node 1 tootip text" },
-      { id: 2, label: "Node 2", title: "node 2 tootip text" },
-      { id: 3, label: "Node 3", title: "node 3 tootip text" },
-      { id: 4, label: "Node 4", title: "node 4 tootip text" },
-      { id: 5, label: "Node 5", title: "node 5 tootip text" }
-    ],
-    edges: [
-      { from: 1, to: 2 },
-      { from: 1, to: 3 },
-      { from: 2, to: 4 },
-      { from: 2, to: 5 }
-    ]
-  };
-
-  const options = {
-    layout: {
-      hierarchical: true
-    },
-    edges: {
-      color: "#000000"
-    },
-    height: "500px"
-  };
-
-  const events = {
-    select: function (event) {
-      var { nodes, edges } = event;
-    }
-  };
 
 
   useEffect(() => { 
@@ -115,6 +130,33 @@ export default function Home() {
               keyValue: state.key !== null ? state.key : undefined
             };
             newHistory.push(genericState);
+          });
+          break;
+        case 'quick':
+        case 'quick':
+          quickSort(arr, (state) => {
+            const genericState: AlgorithmState = {
+              currentArr: state.currentArray,
+              currentIndex: state.leftIndex !== null ? state.leftIndex : undefined,
+              comparingIndex: state.rightIndex !== null ? state.rightIndex : undefined,
+              pivotIndex: state.pivotIndex,
+              pivotValue: state.pivotValue,
+              depth: state.depth
+            };
+            newHistory.push(genericState);
+          });
+          break;
+        case 'merge':
+          mergeSortHead(arr, (state) => {
+            newHistory.push({
+              currentArr: state.currentArray,
+              leftArray: state.leftArray,
+              rightArray: state.rightArray,
+              currentIndex: state.mergeIndex !== null ? state.mergeIndex : undefined,
+              comparingIndex: state.leftIndex !== null ? state.leftIndex : undefined,
+              depth: state.depth,
+              isMerging: state.isMerging
+            });
           });
           break;
       }
@@ -192,7 +234,7 @@ export default function Home() {
               Searching
             </button>
         </div>
-        
+          
         {sortType !== null && (
           <select
           value={sortType}
@@ -222,7 +264,7 @@ export default function Home() {
           onChange={(e) => setSearchTarget(parseInt(e.target.value) || 0)}/>
           </>
         )}
-      </div>
+      </div>x
 
       <div ref={animationParent} className="flex items-end mb-8">
         {history[currentFrame]?.currentArr?.map((element: number, index: number) => {
@@ -253,7 +295,8 @@ export default function Home() {
             </div>
           );
         })}
-        <button 
+        <button
+         
           className="ml-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
           onClick={() => setIsPlaying(true)}
         >
@@ -268,14 +311,6 @@ export default function Home() {
       </div>
       <div className="border rounded p-4">
         <h2 className="text-xl font-bold mb-4">Algorithm Flow</h2>
-        <Graph
-          graph={graph}
-          options={options}
-          events={events}
-          getNetwork={network => {
-            //  if you want access to vis.js network api you can set the state in a parent component using this property
-          }}
-        />
       </div>
     </div>
   );
